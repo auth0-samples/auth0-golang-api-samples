@@ -16,4 +16,4 @@ AUTH0_CLIENT_SECRET={CLIENT_SECRET}
 
 Once you've set your Auth0 credentials in the `.env` file, run `go get .` to install the Go dependencies.
 
-Run `go run main.go` to start the app and navigate to [http://localhost:3000/](http://localhost:3001/ping)
+Run `go run main.go` to start the app and send a `GET` request to [http://localhost:3001/ping](http://localhost:3001/ping) to access an **unsecured** endpoint, or [http://localhost:3001/secured/ping](http://localhost:3001/secured/ping) to access a **secured** endpoint.
