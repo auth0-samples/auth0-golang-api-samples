@@ -12,7 +12,6 @@ Rename the `.env.example` file to `.env` and provide your Auth0 credentials.
 AUTH0_CLIENT_ID={CLIENT_ID}
 AUTH0_DOMAIN={DOMAIN}
 AUTH0_CLIENT_SECRET={CLIENT_SECRET}
-AUTH0_CALLBACK_URL=http://localhost:3000/callback
 ```
 
 Once you've set your Auth0 credentials in the `.env` file, run `go get .` to install the Go dependencies.
