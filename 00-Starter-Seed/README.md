@@ -17,4 +17,4 @@ AUTH0_CALLBACK_URL=http://localhost:3000/callback
 
 Once you've set your Auth0 credentials in the `.env` file, run `go get .` to install the Go dependencies.
 
-Run `go run main.go server.go` to start the app and navigate to [http://localhost:3000/](http://localhost:3000/ping)
+Run `go run main.go` to start the app and navigate to [http://localhost:3000/](http://localhost:3001/ping)
