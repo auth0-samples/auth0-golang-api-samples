@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"github.com/auth0/go-jwt-middleware"
 	"github.com/codegangsta/negroni"
@@ -29,11 +28,11 @@ func StartServer() {
 
 	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			decoded, err := base64.URLEncoding.DecodeString(os.Getenv("AUTH0_CLIENT_SECRET"))
+			token, err := os.Getenv("AUTH0_CLIENT_SECRET")
 			if err != nil {
 				return nil, err
 			}
-			return decoded, nil
+			return token, nil
 		},
 	})
 
