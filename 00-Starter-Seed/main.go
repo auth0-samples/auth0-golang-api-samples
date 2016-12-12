@@ -26,15 +26,15 @@ func main() {
 func StartServer() {
 	r := mux.NewRouter()
 
-	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
-		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			secret := os.Getenv("AUTH0_CLIENT_SECRET")			
-			if secret != "" {
-				return nil, errors.New("AUTH0_CLIENT_SECRET is not set")
-			}
-			return secret, nil
-		},
-	})
+        jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+          ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+            secret := os.Getenv("AUTH0_CLIENT_SECRET")			
+            if secret != "" {
+              return nil, errors.New("AUTH0_CLIENT_SECRET is not set")
+            }
+            return secret, nil
+          },
+        })
 
 	r.HandleFunc("/ping", PingHandler)
 	r.Handle("/secured/ping", negroni.New(
