@@ -29,7 +29,7 @@ func StartServer() {
         jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
           ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
             secret := os.Getenv("AUTH0_CLIENT_SECRET")			
-            if secret != "" {
+            if secret == "" {
               return nil, errors.New("AUTH0_CLIENT_SECRET is not set")
             }
             return secret, nil
