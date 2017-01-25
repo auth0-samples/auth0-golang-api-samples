@@ -2,14 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/auth0/go-jwt-middleware"
-	"github.com/codegangsta/negroni"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
+
+	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/codegangsta/negroni"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -26,15 +27,17 @@ func main() {
 func StartServer() {
 	r := mux.NewRouter()
 
-        jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
-          ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-            secret := os.Getenv("AUTH0_CLIENT_SECRET")			
-            if secret == "" {
-              log.Fatal("AUTH0_CLIENT_SECRET is not set")
-            }
-            return secret, nil
-          },
-        })
+	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			secret := []byte(os.Getenv("AUTH0_CLIENT_SECRET"))
+
+			if len(secret) == 0 {
+				log.Fatal("AUTH0_CLIENT_SECRET is not set")
+			}
+
+			return secret, nil
+		},
+	})
 
 	r.HandleFunc("/ping", PingHandler)
 	r.Handle("/secured/ping", negroni.New(
