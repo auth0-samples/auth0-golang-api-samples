@@ -4,6 +4,38 @@ This sample demonstrates how to protect endpoints in a Go API by verifying an in
 
 ## Getting Started
 
+If you haven't already done so, [sign up](https://auth0.com/signup) for your free Auth0 account and create a new API client in the [dashboard](https://manage.auth0.com/).
+
+Clone the repo or download it from the Golang API quickstart page in Auth0's documentation.
+
+### Add Your Credentials
+
+Open up the `main.go` file and on lines 15-17 you will see variables for `JWKS_URI`, `AUTH0_API_ISSUER`, and `AUTH0_API_AUDIENCE`. Update these values with your credentials and save the file.
+
+### Install Dependencies and Start Server
+
+```bash
+// Install dependencies
+go get "github.com/gorilla/mux"
+go get "gopkg.in/square/go-jose.v2"
+go get "github.com/auth0-community/go-auth0"
+
+// Start the server
+go run main.go
+```
+
+The API will be served at `http://localhost:3001`.
+
+### Endpoints
+
+The sample includes these endpoints:
+
+**GET** /api/public
+* An unprotected endpoint which returns a message on success. Does not require a valid JWT access token.
+
+**GET** /api/private
+* A protected endpoint which returns a message on success. Requires a valid JWT access token with a `scope` of `read:messages`.
+
 ## What is Auth0?
 
 Auth0 helps you to:
