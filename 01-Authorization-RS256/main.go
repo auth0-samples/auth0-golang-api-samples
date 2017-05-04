@@ -12,9 +12,9 @@ import (
 	jwt "gopkg.in/square/go-jose.v2/jwt"
 )
 
-const JWKS_URI = "https://{YOUR-AUTH0-DOMAIN}.auth0.com/.well-known/jwks.json"
-const AUTH0_API_ISSUER = "https://{YOUR-AUTH0-DOMAIN}.auth0.com/"
-const AUTH0_API_AUDIENCE = "{YOUR-AUTH0-API-IDENTIFIER}"
+const JWKS_URI = "https://{DOMAIN}.auth0.com/.well-known/jwks.json"
+const AUTH0_API_ISSUER = "https://{DOMAIN}.auth0.com/"
+const AUTH0_API_AUDIENCE = "{API-IDENTIFIER}"
 
 type Response struct {
 	Message string `json:"message"`

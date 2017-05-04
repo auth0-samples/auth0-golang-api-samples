@@ -10,7 +10,7 @@ Clone the repo or download it from the Golang API quickstart page in Auth0's doc
 
 ### Add Your Credentials
 
-Open up the `main.go` file and on lines 15-17 you will see variables for `JWKS_URI`, `AUTH0_API_ISSUER`, and `AUTH0_API_AUDIENCE`. Update these values with your credentials and save the file.
+Open up the `main.go` file and you will see variables for `JWKS_URI`, `AUTH0_API_ISSUER`, and `AUTH0_API_AUDIENCE`. Update these values with your credentials and save the file.
 
 ### Install Dependencies and Start Server
 
