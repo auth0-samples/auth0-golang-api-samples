@@ -1,8 +1,8 @@
-# Auth0 Golang API Samples
+# Golang Authorization for RS256-Signed Tokens
 
-These samples demonstrate how to create an API with Go which only permits access to resources if a valid **access token** is included. This verification is done by validating the signature and claims in a JSON Web Token (JWT) signed by Auth0.
+This sample demonstrates how to protect endpoints in a Go API by verifying an incoming JWT access token signed by Auth0. The token must be signed with the RS256 algorithm and must be verified against your Auth0 JSON Web Key Set.
 
-These samples do not demonstrate how to sign a JWT but rather assume that a user has already been authenticated by Auth0 and holds an access token for API access. For information on how to use Auth0 to authenticate users, see [the docs](https://auth0.com/docs).
+## Getting Started
 
 ## What is Auth0?
 
@@ -30,4 +30,4 @@ If you have found a bug or if you have a feature request, please report them at 
 
 ## License
 
-This project is licensed under the MIT license. See the [LICENSE](LICENSE.txt) file for more info.
+This project is licensed under the MIT license. See the `LICENSE` file for more info.
