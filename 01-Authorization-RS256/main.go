@@ -14,7 +14,8 @@ import (
 
 const JWKS_URI = "https://{DOMAIN}/.well-known/jwks.json"
 const AUTH0_API_ISSUER = "https://{DOMAIN}.auth0.com/"
-const AUTH0_API_AUDIENCE = "{API_IDENTIFIER}"
+
+var AUTH0_API_AUDIENCE = []string{"{API_IDENTIFIER}"}
 
 type Response struct {
 	Message string `json:"message"`
