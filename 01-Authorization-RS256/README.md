@@ -10,17 +10,23 @@ Clone the repo or download it from the Golang API quickstart page in Auth0's doc
 
 ### Add Your Credentials
 
-Open up the `main.go` file and you will see variables for `JWKS_URI`, `AUTH0_API_ISSUER`, and `AUTH0_API_AUDIENCE`. Update these values with your credentials and save the file.
+Rename the `.env.example` to `.env` and you will see variables for `AUTH0_DOMAIN` and `AUTH0_API_AUDIENCE`. Update these values with your credentials and save the file.
+
+```text
+AUTH0_DOMAIN={DOMAIN}
+AUTH0_AUDIENCE={API_AUDIENCE}
+```
 
 ### Install Dependencies and Start Server
 
 ```bash
-// Install dependencies
+# Install dependencies
 go get "github.com/gorilla/mux"
 go get "gopkg.in/square/go-jose.v2"
 go get "github.com/auth0-community/go-auth0"
+go get "github.com/joho/godotenv"
 
-// Start the server
+# Start the server
 go run main.go
 ```
 
@@ -35,6 +41,14 @@ The sample includes these endpoints:
 
 **GET** /api/private
 * A protected endpoint which returns a message on success. Requires a valid JWT access token with a `scope` of `read:messages`.
+
+### Running the Example With Docker
+
+In order to run the example with docker you need to have `docker` installed.
+
+You also need to set the environment variables as explained [previously](#add-your-credentials).
+
+Execute in command line `sh exec.sh` to run the Docker in Linux, or `.\exec.ps1` to run the Docker in Windows.
 
 ## What is Auth0?
 
