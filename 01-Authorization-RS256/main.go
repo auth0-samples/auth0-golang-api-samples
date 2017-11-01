@@ -10,18 +10,22 @@ import (
 	"github.com/gorilla/mux"
 	jose "gopkg.in/square/go-jose.v2"
 	jwt "gopkg.in/square/go-jose.v2/jwt"
+	"github.com/joho/godotenv"
+	"log"
+	"os"
 )
-
-const JWKS_URI = "https://{DOMAIN}/.well-known/jwks.json"
-const AUTH0_API_ISSUER = "https://{DOMAIN}.auth0.com/"
-
-var AUTH0_API_AUDIENCE = []string{"{API_IDENTIFIER}"}
 
 type Response struct {
 	Message string `json:"message"`
 }
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Print("Error loading .env file")
+	}
+
 	r := mux.NewRouter()
 
 	// This route is always accessible
@@ -47,15 +51,18 @@ func main() {
 
 	})))
 
-	http.ListenAndServe(":3001", r)
 	fmt.Println("Listening on http://localhost:3001")
+	http.ListenAndServe("0.0.0.0:3001", r)
 }
 
 func checkJwt(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		JWKS_URI := "https://" + os.Getenv("AUTH0_DOMAIN") + "/.well-known/jwks.json"
 		client := auth0.NewJWKClient(auth0.JWKClientOptions{URI: JWKS_URI})
-		audience := AUTH0_API_AUDIENCE
+		aud := os.Getenv("AUTH0_AUDIENCE")
+		audience := []string{aud}
 
+		var AUTH0_API_ISSUER = "https://" + os.Getenv("AUTH0_DOMAIN") + "/"
 		configuration := auth0.NewConfiguration(client, audience, AUTH0_API_ISSUER, jose.RS256)
 		validator := auth0.NewValidator(configuration)
 
