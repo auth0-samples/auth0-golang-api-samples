@@ -47,8 +47,8 @@ func main() {
 
 	})))
 
-	http.ListenAndServe(":3001", r)
 	fmt.Println("Listening on http://localhost:3001")
+	http.ListenAndServe(":3001", r)
 }
 
 func checkJwt(h http.Handler) http.Handler {
