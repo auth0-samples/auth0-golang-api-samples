@@ -51,8 +51,8 @@ func main() {
 
 	})))
 
-	fmt.Println("Listening on http://localhost:3001")
-	http.ListenAndServe("0.0.0.0:3001", r)
+	fmt.Println("Listening on http://localhost:3010")
+	http.ListenAndServe("0.0.0.0:3010", r)
 }
 
 func checkJwt(h http.Handler) http.Handler {
@@ -105,7 +105,7 @@ func checkScope(r *http.Request, validator *auth0.JWTValidator, token *jwt.JSONW
 		return false
 	}
 
-	if strings.Contains(claims["scope"].(string), "read:messages") {
+	if claims["scope"] != nil && strings.Contains(claims["scope"].(string), "read:messages") {
 		return true
 	} else {
 		return false

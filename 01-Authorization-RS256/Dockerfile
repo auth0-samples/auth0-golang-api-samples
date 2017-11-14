@@ -13,4 +13,4 @@ RUN go-wrapper download
 
 CMD ["go", "run", "main.go"]
 
-EXPOSE 3001
+EXPOSE 3010

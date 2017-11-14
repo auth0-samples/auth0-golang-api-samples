@@ -30,7 +30,7 @@ go get "github.com/joho/godotenv"
 go run main.go
 ```
 
-The API will be served at `http://localhost:3001`.
+The API will be served at `http://localhost:3010`.
 
 ### Endpoints
 
