@@ -34,20 +34,55 @@ func main() {
 			Message: "Hello from a public endpoint! You don't need to be authenticated to see this.",
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
 	}))
 
+	// This route is only accessible if the user has a valid access_token
+	// We are wrapping the checkJwt middleware around the handler function which will check for a valid token.
+	r.Handle("/api/private", checkJwt(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := Response{
+			Message: "Hello from a private endpoint! You need to be authenticated to see this.",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+
+	})))
+
 	// This route is only accessible if the user has a valid access_token with the read:messages scope
 	// We are wrapping the checkJwt middleware around the handler function which will check for a
 	// valid token and scope.
-	r.Handle("/api/private", checkJwt(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		response := Response{
-			Message: "Hello from a private endpoint! You need to be authenticated and have a scope of read:messages to see this.",
-		}
+	r.Handle("/api/private-scoped", checkJwt(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Ensure the token has the correct scope
+		JWKS_URI := "https://" + os.Getenv("AUTH0_DOMAIN") + "/.well-known/jwks.json"
+		client := auth0.NewJWKClient(auth0.JWKClientOptions{URI: JWKS_URI})
+		aud := os.Getenv("AUTH0_AUDIENCE")
+		audience := []string{aud}
 
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		var AUTH0_API_ISSUER = "https://" + os.Getenv("AUTH0_DOMAIN") + "/"
+		configuration := auth0.NewConfiguration(client, audience, AUTH0_API_ISSUER, jose.RS256)
+		validator := auth0.NewValidator(configuration)
+		token, _ := validator.ValidateRequest(r)
+		result := checkScope(r, validator, token)
+		if result == true {
+			response := Response{
+				Message: "Hello from a private endpoint! You need to be authenticated and have a scope of read:messages to see this.",
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(response)
+		} else {
+			response := Response{
+				Message: "You do not have the read:messages scope.",
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(response)
+
+		}
 
 	})))
 
@@ -66,7 +101,7 @@ func checkJwt(h http.Handler) http.Handler {
 		configuration := auth0.NewConfiguration(client, audience, AUTH0_API_ISSUER, jose.RS256)
 		validator := auth0.NewValidator(configuration)
 
-		token, err := validator.ValidateRequest(r)
+		_, err := validator.ValidateRequest(r)
 
 		if err != nil {
 			fmt.Println("Token is not valid or missing token")
@@ -75,23 +110,12 @@ func checkJwt(h http.Handler) http.Handler {
 				Message: "Missing or invalid token.",
 			}
 
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(response)
 
 		} else {
-			// Ensure the token has the correct scope
-			result := checkScope(r, validator, token)
-			if result == true {
-				// If the token is valid and we have the right scope, we'll pass through the middleware
-				h.ServeHTTP(w, r)
-			} else {
-				response := Response{
-					Message: "You do not have the read:messages scope.",
-				}
-				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(response)
-
-			}
+			h.ServeHTTP(w, r)
 		}
 	})
 }

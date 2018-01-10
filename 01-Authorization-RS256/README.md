@@ -40,6 +40,9 @@ The sample includes these endpoints:
 * An unprotected endpoint which returns a message on success. Does not require a valid JWT access token.
 
 **GET** /api/private
+* A protected endpoint which returns a message on success. Requires a valid JWT access token.
+
+**GET** /api/private-scoped
 * A protected endpoint which returns a message on success. Requires a valid JWT access token with a `scope` of `read:messages`.
 
 ### Running the Example With Docker
@@ -72,7 +75,7 @@ If you have found a bug or if you have a feature request, please report them at 
 
 ## Author
 
-[Auth0](auth0.com)
+[Auth0](https://auth0.com)
 
 ## License
 
