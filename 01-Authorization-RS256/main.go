@@ -79,7 +79,7 @@ func main() {
 				Message: "You do not have the read:messages scope.",
 			}
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusForbidden)
 			json.NewEncoder(w).Encode(response)
 
 		}
