@@ -21,10 +21,7 @@ AUTH0_AUDIENCE={API_AUDIENCE}
 
 ```bash
 # Install dependencies
-go get "github.com/gorilla/mux"
-go get "gopkg.in/square/go-jose.v2"
-go get "github.com/auth0-community/go-auth0"
-go get "github.com/joho/godotenv"
+go get -d
 
 # Start the server
 go run main.go
