@@ -1,0 +1,47 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/repo
+    machine: true
+           
+    steps:
+      - checkout
+      - run: 
+          name: Set .env file
+          command: |
+              echo "AUTH0_DOMAIN=$domain" >> .env
+              echo "AUTH0_AUDIENCE=$audience" >> .env
+          
+      - run: 
+           name: background server
+           command: sh exec.sh
+           background: true
+      
+      - run: sleep 20
+      
+      - run:
+          name: Clone script test
+          command: git clone http://github.com/rafanog/test-script.git test
+                      
+      - run: 
+          name: Prepare environment variables for test
+          command: |
+            cd test
+            echo "AUTH0_DOMAIN=$domain" >> .env
+            echo "AUTH0_AUDIENCE=$audience" >> .env
+            echo "AUTH0_CLIENT_ID_1=$id1" >> .env
+            echo "AUTH0_CLIENT_SECRET_1=$secret1" >> .env
+            echo "AUTH0_CLIENT_ID_2=$id2" >> .env
+            echo "AUTH0_CLIENT_SECRET_2=$secret2" >> .env
+            echo "AUTH0_CLIENT_ID_3=$id3" >> .env
+            echo "AUTH0_CLIENT_SECRET_3=$secret3" >> .env
+            echo "AUTH0_CLIENT_ID_4=$id4" >> .env
+            echo "AUTH0_CLIENT_SECRET_4=$secret4" >> .env
+            echo "API_URL=http://localhost:3010" >> .env
+      
+      - run:
+          name: Install test script dependency
+          command: cd test && npm install && npm install asyncawait
+      - run:
+          name: Test
+          command: cd test && npm test
