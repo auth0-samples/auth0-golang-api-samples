@@ -14,6 +14,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 type Response struct {
@@ -66,6 +67,12 @@ func main() {
 		SigningMethod: jwt.SigningMethodRS256,
 	})
 
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowCredentials: true,
+		AllowedHeaders: []string{"Authorization"},
+	})
+
 	r := mux.NewRouter()
 
 	// This route is always accessible
@@ -104,9 +111,10 @@ func main() {
 			responseJSON(message, w, http.StatusOK)
 	}))))
 
+	handler := c.Handler(r)
 	http.Handle("/", r)
 	fmt.Println("Listening on http://localhost:3010")
-	http.ListenAndServe("0.0.0.0:3010", nil)
+	http.ListenAndServe("0.0.0.0:3010", handler)
 }
 
 
