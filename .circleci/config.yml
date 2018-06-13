@@ -29,8 +29,7 @@ jobs:
       - run:
           name: Clone script test
           command: git clone https://github.com/auth0-samples/api-quickstarts-tests test
-          #command: git clone http://github.com/rafanog/test-script.git test
-                      
+          
       - run: 
           name: Prepare environment variables for test
           command: |
