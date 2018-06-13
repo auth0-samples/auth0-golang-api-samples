@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/repo/01-Authorization
+    working_directory: ~/repo/01-Authorization-RS256
     machine: true
            
     steps:
