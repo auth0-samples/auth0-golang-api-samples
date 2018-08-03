@@ -2,35 +2,36 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/http"
-	"strings"
 	"errors"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/codegangsta/negroni"
-	"github.com/auth0/go-jwt-middleware"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 )
 
+// Response defines the API response
 type Response struct {
 	Message string `json:"message"`
 }
 
+// Jwks represents a JSON Web Key Set
 type Jwks struct {
 	Keys []JSONWebKeys `json:"keys"`
 }
 
+// JSONWebKeys represents a single key in a JSON Web Key Set
 type JSONWebKeys struct {
-	Kty string `json:"kty"`
-	Kid string `json:"kid"`
-	Use string `json:"use"`
-	N string `json:"n"`
-	E string `json:"e"`
+	Kty string   `json:"kty"`
+	Kid string   `json:"kid"`
+	Use string   `json:"use"`
+	N   string   `json:"n"`
+	E   string   `json:"e"`
 	X5c []string `json:"x5c"`
 }
 
@@ -41,19 +42,19 @@ func main() {
 		log.Print("Error loading .env file")
 	}
 
-	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options {
+	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
 			// Verify 'aud' claim
 			aud := os.Getenv("AUTH0_AUDIENCE")
 			checkAud := token.Claims.(jwt.MapClaims).VerifyAudience(aud, false)
 			if !checkAud {
-				return token, errors.New("Invalid audience.")
+				return token, errors.New("invalid audience")
 			}
 			// Verify 'iss' claim
 			iss := "https://" + os.Getenv("AUTH0_DOMAIN") + "/"
 			checkIss := token.Claims.(jwt.MapClaims).VerifyIssuer(iss, false)
 			if !checkIss {
-				return token, errors.New("Invalid issuer.")
+				return token, errors.New("invalid issuer")
 			}
 
 			cert, err := getPemCert(token)
@@ -61,16 +62,16 @@ func main() {
 				panic(err.Error())
 			}
 
-			result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
-			return result, nil
+			result, err := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
+			return result, err
 		},
 		SigningMethod: jwt.SigningMethodRS256,
 	})
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowCredentials: true,
-		AllowedHeaders: []string{"Authorization"},
+		AllowedHeaders:   []string{"Authorization"},
 	})
 
 	r := mux.NewRouter()
@@ -89,7 +90,7 @@ func main() {
 		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			message := "Hello from a private endpoint! You need to be authenticated to see this."
 			responseJSON(message, w, http.StatusOK)
-	}))))
+		}))))
 
 	// This route is only accessible if the user has a valid access_token with the read:messages scope
 	// We are chaining the jwtmiddleware middleware into the negroni handler function which will check
@@ -109,7 +110,7 @@ func main() {
 			}
 			message := "Hello from a private endpoint! You need to be authenticated to see this."
 			responseJSON(message, w, http.StatusOK)
-	}))))
+		}))))
 
 	handler := c.Handler(r)
 	http.Handle("/", r)
@@ -117,26 +118,31 @@ func main() {
 	http.ListenAndServe("0.0.0.0:3010", handler)
 }
 
-
+// CustomClaims defines all of the claims for a JWT
 type CustomClaims struct {
 	Scope string `json:"scope"`
 	jwt.StandardClaims
 }
 
 func checkScope(scope string, tokenString string) bool {
-	token, _ := jwt.ParseWithClaims(tokenString, &CustomClaims{}, nil)
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, nil)
+	if err != nil {
+		return false
+	}
 
-	claims, _ := token.Claims.(*CustomClaims)
+	claims, ok := token.Claims.(*CustomClaims)
+	if !ok {
+		return false
+	}
 
-	hasScope := false
 	result := strings.Split(claims.Scope, " ")
 	for i := range result {
 		if result[i] == scope {
-			hasScope = true
+			return true
 		}
 	}
 
-	return hasScope
+	return false
 }
 
 func getPemCert(token *jwt.Token) (string, error) {
@@ -157,16 +163,17 @@ func getPemCert(token *jwt.Token) (string, error) {
 
 	for k, _ := range jwks.Keys {
 		if token.Header["kid"] == jwks.Keys[k].Kid {
+			if len(jwks.Keys[k].X5c) == 0 {
+				return cert, errors.New("missing certificate chain")
+			}
+
 			cert = "-----BEGIN CERTIFICATE-----\n" + jwks.Keys[k].X5c[0] + "\n-----END CERTIFICATE-----"
+
+			return cert, nil
 		}
 	}
 
-	if cert == "" {
-		err := errors.New("Unable to find appropriate key.")
-		return cert, err
-	}
-
-	return cert, nil
+	return cert, errors.New("unable to find appropriate key")
 }
 
 func responseJSON(message string, w http.ResponseWriter, statusCode int) {
