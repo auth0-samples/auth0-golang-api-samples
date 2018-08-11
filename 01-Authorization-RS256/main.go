@@ -9,7 +9,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/auth0/go-jwt-middleware"
 	"github.com/codegangsta/negroni"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
