@@ -1,37 +1,27 @@
-version: 2
-jobs:
-  build:
-    working_directory: ~/repo/01-Authorization-RS256
-    machine: true
-           
+# Common Logic
+defaults: &defaults
     steps:
-      - checkout:
-         path: ~/repo
-
-      - run: 
-          name: Set .env file
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Prepare environment variables
+          command: | 
+            cd $AUTH0_CFG
+            mv .env.example .env
+            sed -i 's|{DOMAIN}|'$auth0_domain'|g' .env
+            sed -i 's|{API_IDENTIFIER}|'$api_identifier'|g' .env
+      - run:
+          name: Background Server
+          command: cd $AUTH0_CFG && sh exec.sh
+          background: true
+      - run:
+          name: Wait until server is online 
           command: |
-              echo "AUTH0_DOMAIN=$auth0_domain" >> .env
-              echo "API_IDENTIFIER=$api_identifier" >> .env
- 
-      - run: 
-           name: background server
-           command: sh exec.sh
-           background: true
-           
+            until $(curl --silent --head --output /dev/null --fail http://localhost:3010/api/public); do
+                sleep 5
+            done
       - run:
-           name: Wait until server is online
-           command: |
-              until $(curl --output /dev/null --silent --head --fail http://localhost:3010/api/public); do
-                  sleep 5
-              done
-         
-      - run:
-          name: Clone script test
-          command: git clone https://github.com/auth0-samples/api-quickstarts-tests test
-          
-      - run: 
-          name: Prepare environment variables for test
+          name: Prepare tests
           command: |
             cd test
             echo "AUTH0_DOMAIN=$auth0_domain" >> .env
@@ -45,17 +35,38 @@ jobs:
             echo "AUTH0_CLIENT_ID_4=$client_id_scopes_readwrite" >> .env
             echo "AUTH0_CLIENT_SECRET_4=$client_secret_scopes_readwrite" >> .env
             echo "API_URL=http://localhost:3010" >> .env
-
+            npm install
       - run:
-          name: Install test script dependency
-          command: cd test && npm install 
-
+          name: Execute automated tests
+          command: cd test && npm test       
+# Jobs and Workflows
+version: 2
+jobs: 
+  checkout:
+    machine: true
+    steps:
+      - checkout
       - run:
-          name: Test
-          command: cd test && npm test
+          name: Clone test script
+          command: git clone https://github.com/auth0-samples/api-quickstarts-tests test
+      - persist_to_workspace:
+          root: ~/ 
+          paths:
+            - project
+            - test
+  01-Authorization-RS256:
+    machine: true
+    environment:
+      - AUTH0_CFG: 01-Authorization-RS256
+      - SAMPLE_PATH: 01-Authorization-RS256
+    <<: *defaults
 workflows:
   version: 2
-  build:
+  API-Tests:
     jobs:
-      - build:
+      - checkout:
           context: Quickstart API Tests
+      - 01-Authorization-RS256:
+          context: Quickstart API Tests
+          requires:
+            - checkout
