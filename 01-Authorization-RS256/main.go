@@ -93,7 +93,7 @@ func main() {
 
 	// This route is only accessible if the user has a valid access_token with the read:messages scope
 	// We are chaining the jwtmiddleware middleware into the negroni handler function which will check
-	// for a valid token and and scope.
+	// for a valid token and scope.
 	r.Handle("/api/private-scoped", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
 		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
