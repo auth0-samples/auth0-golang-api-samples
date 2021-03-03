@@ -141,6 +141,7 @@ func checkScope(scope string, tokenString string) bool {
 		for i := range result {
 			if result[i] == scope {
 				hasScope = true
+				break
 			}
 		}
 	}
