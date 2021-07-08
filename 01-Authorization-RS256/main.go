@@ -2,16 +2,16 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/http"
-	"strings"
 	"errors"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 
+	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/codegangsta/negroni"
-	"github.com/auth0/go-jwt-middleware"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/form3tech-oss/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
@@ -26,11 +26,11 @@ type Jwks struct {
 }
 
 type JSONWebKeys struct {
-	Kty string `json:"kty"`
-	Kid string `json:"kid"`
-	Use string `json:"use"`
-	N string `json:"n"`
-	E string `json:"e"`
+	Kty string   `json:"kty"`
+	Kid string   `json:"kid"`
+	Use string   `json:"use"`
+	N   string   `json:"n"`
+	E   string   `json:"e"`
 	X5c []string `json:"x5c"`
 }
 
@@ -41,7 +41,7 @@ func main() {
 		log.Print("Error loading .env file")
 	}
 
-	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options {
+	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
 			// Verify 'aud' claim
 			aud := os.Getenv("AUTH0_AUDIENCE")
@@ -68,9 +68,9 @@ func main() {
 	})
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowCredentials: true,
-		AllowedHeaders: []string{"Authorization"},
+		AllowedHeaders:   []string{"Authorization"},
 	})
 
 	r := mux.NewRouter()
@@ -89,7 +89,7 @@ func main() {
 		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			message := "Hello from a private endpoint! You need to be authenticated to see this."
 			responseJSON(message, w, http.StatusOK)
-	}))))
+		}))))
 
 	// This route is only accessible if the user has a valid access_token with the read:messages scope
 	// We are chaining the jwtmiddleware middleware into the negroni handler function which will check
@@ -109,7 +109,7 @@ func main() {
 			}
 			message := "Hello from a private endpoint! You need to be authenticated to see this."
 			responseJSON(message, w, http.StatusOK)
-	}))))
+		}))))
 
 	handler := c.Handler(r)
 	http.Handle("/", r)
@@ -117,14 +117,13 @@ func main() {
 	http.ListenAndServe("0.0.0.0:3010", handler)
 }
 
-
 type CustomClaims struct {
 	Scope string `json:"scope"`
 	jwt.StandardClaims
 }
 
 func checkScope(scope string, tokenString string) bool {
-	token, _ := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func (token *jwt.Token) (interface{}, error) {
+	token, _ := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		cert, err := getPemCert(token)
 		if err != nil {
 			return nil, err
