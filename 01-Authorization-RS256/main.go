@@ -123,7 +123,7 @@ type CustomClaims struct {
 }
 
 func checkScope(scope string, tokenString string) bool {
-	token, _ := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		cert, err := getPemCert(token)
 		if err != nil {
 			return nil, err
@@ -131,6 +131,11 @@ func checkScope(scope string, tokenString string) bool {
 		result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
 		return result, nil
 	})
+
+	if err != nil {
+		log.Println(err)
+		return false
+	}
 
 	claims, ok := token.Claims.(*CustomClaims)
 
