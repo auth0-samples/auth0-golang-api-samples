@@ -20,8 +20,8 @@ AUTH0_AUDIENCE={API_AUDIENCE}
 ### Install Dependencies and Start Server
 
 ```bash
-# Install dependencies
-go get -d
+# Download dependencies
+go mod vendor
 
 # Start the server
 go run main.go
