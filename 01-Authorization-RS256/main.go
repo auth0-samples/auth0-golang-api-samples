@@ -35,7 +35,6 @@ type JSONWebKeys struct {
 }
 
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Print("Error loading .env file")
@@ -97,16 +96,15 @@ func main() {
 	r.Handle("/api/private-scoped", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
 		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authHeaderParts := strings.Split(r.Header.Get("Authorization"), " ")
-			token := authHeaderParts[1]
+			token := r.Context().Value("user").(*jwt.Token)
 
 			hasScope := checkScope("read:messages", token)
-
 			if !hasScope {
 				message := "Insufficient scope."
 				responseJSON(message, w, http.StatusForbidden)
 				return
 			}
+
 			message := "Hello from a private endpoint! You need to be authenticated to see this."
 			responseJSON(message, w, http.StatusOK)
 		}))))
@@ -117,34 +115,26 @@ func main() {
 	http.ListenAndServe("0.0.0.0:3010", handler)
 }
 
-type CustomClaims struct {
-	Scope string `json:"scope"`
-	jwt.StandardClaims
-}
+func checkScope(scope string, token *jwt.Token) bool {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return false
+	}
 
-func checkScope(scope string, tokenString string) bool {
-	token, _ := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		cert, err := getPemCert(token)
-		if err != nil {
-			return nil, err
-		}
-		result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
-		return result, nil
-	})
+	const scopeKey = "scope"
+	tokenScope, ok := claims[scopeKey].(string)
+	if !ok {
+		return false
+	}
 
-	claims, ok := token.Claims.(*CustomClaims)
-
-	hasScope := false
-	if ok && token.Valid {
-		result := strings.Split(claims.Scope, " ")
-		for i := range result {
-			if result[i] == scope {
-				hasScope = true
-			}
+	result := strings.Split(tokenScope, " ")
+	for i := range result {
+		if result[i] == scope {
+			return true
 		}
 	}
 
-	return hasScope
+	return false
 }
 
 func getPemCert(token *jwt.Token) (string, error) {
