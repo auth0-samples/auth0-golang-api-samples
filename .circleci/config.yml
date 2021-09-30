@@ -1,4 +1,7 @@
 # Common Logic
+machine: &machine-cfg
+  image: ubuntu-2004:202107-02
+
 defaults: &defaults
     steps:
       - attach_workspace:
@@ -38,28 +41,32 @@ defaults: &defaults
             npm install
       - run:
           name: Execute automated tests
-          command: cd test && npm test       
+          command: cd test && npm test
+
 # Jobs and Workflows
 version: 2
 jobs: 
   checkout:
-    machine: true
+    machine:
+      <<: *machine-cfg
     steps:
       - checkout
       - run:
           name: Clone test script
-          command: git clone https://github.com/auth0-samples/api-quickstarts-tests test
+          command: git clone -b v0.0.1 --depth 1 https://github.com/auth0-samples/api-quickstarts-tests test
       - persist_to_workspace:
           root: ~/ 
           paths:
             - project
             - test
   01-Authorization-RS256:
-    machine: true
+    machine:
+      <<: *machine-cfg
     environment:
-      - AUTH0_CFG: 01-Authorization-RS256
-      - SAMPLE_PATH: 01-Authorization-RS256
+      AUTH0_CFG: 01-Authorization-RS256
+      SAMPLE_PATH: 01-Authorization-RS256
     <<: *defaults
+
 workflows:
   version: 2
   API-Tests:
