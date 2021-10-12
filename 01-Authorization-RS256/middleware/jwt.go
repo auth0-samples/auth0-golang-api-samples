@@ -8,33 +8,43 @@ import (
 
 	"github.com/auth0/go-jwt-middleware"
 	"github.com/form3tech-oss/jwt-go"
+	"github.com/gin-gonic/gin"
 )
 
-var JWT = jwtmiddleware.New(jwtmiddleware.Options{
-	ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-		// Verify 'aud' claim
-		aud := os.Getenv("AUTH0_AUDIENCE")
-		checkAud := token.Claims.(jwt.MapClaims).VerifyAudience(aud, false)
-		if !checkAud {
-			return token, errors.New("invalid audience")
-		}
+// EnsureValidToken is a gin.HandlerFunc middleware that will check the validity of our JWT.
+func EnsureValidToken() gin.HandlerFunc {
+	var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			// Verify 'aud' claim
+			aud := os.Getenv("AUTH0_AUDIENCE")
+			checkAud := token.Claims.(jwt.MapClaims).VerifyAudience(aud, false)
+			if !checkAud {
+				return token, errors.New("invalid audience")
+			}
 
-		// Verify 'iss' claim
-		iss := "https://" + os.Getenv("AUTH0_DOMAIN") + "/"
-		checkIss := token.Claims.(jwt.MapClaims).VerifyIssuer(iss, false)
-		if !checkIss {
-			return token, errors.New("invalid issuer")
-		}
+			// Verify 'iss' claim
+			iss := "https://" + os.Getenv("AUTH0_DOMAIN") + "/"
+			checkIss := token.Claims.(jwt.MapClaims).VerifyIssuer(iss, false)
+			if !checkIss {
+				return token, errors.New("invalid issuer")
+			}
 
-		cert, err := getPemCert(token)
-		if err != nil {
-			return token, err
-		}
+			cert, err := getPemCert(token)
+			if err != nil {
+				return token, err
+			}
 
-		return jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
-	},
-	SigningMethod: jwt.SigningMethodRS256,
-})
+			return jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
+		},
+		SigningMethod: jwt.SigningMethodRS256,
+	})
+
+	return func(ctx *gin.Context) {
+		if err := jwtMiddleware.CheckJWT(ctx.Writer, ctx.Request); err != nil {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+		}
+	}
+}
 
 type Jwks struct {
 	Keys []JSONWebKeys `json:"keys"`

@@ -1,64 +1,62 @@
 package router
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
-	"github.com/codegangsta/negroni"
 	"github.com/form3tech-oss/jwt-go"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 
 	"01-Authorization-RS256/middleware"
 )
 
-type Response struct {
-	Message string `json:"message"`
-}
+// New sets up our routes and returns a *gin.Engine.
+func New() *gin.Engine {
+	router := gin.Default()
 
-func New() *mux.Router {
-	r := mux.NewRouter()
+	// This route is always accessible.
+	router.Any("/api/public", func(ctx *gin.Context) {
+		response := map[string]string{
+			"message": "Hello from a public endpoint! You don't need to be authenticated to see this.",
+		}
+		ctx.JSON(http.StatusOK, response)
+	})
 
-	// This route is always accessible
-	r.Handle("/api/public", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		message := "Hello from a public endpoint! You don't need to be authenticated to see this."
-		responseJSON(message, w, http.StatusOK)
-	}))
-
-	// This route is only accessible if the user has a valid access_token
-	// We are chaining the jwtmiddleware middleware into the negroni handler function which will check
-	// for a valid token.
-	r.Handle("/api/private", negroni.New(
-		negroni.HandlerFunc(middleware.JWT.HandlerWithNext),
-		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			message := "Hello from a private endpoint! You need to be authenticated to see this."
-			responseJSON(message, w, http.StatusOK)
-		}))))
-
-	// This route is only accessible if the user has a valid access_token with the read:messages scope
-	// We are chaining the jwtmiddleware middleware into the negroni handler function which will check
-	// for a valid token and scope.
-	r.Handle(
-		"/api/private-scoped",
-		negroni.New(
-			negroni.HandlerFunc(middleware.JWT.HandlerWithNext),
-			negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				token := r.Context().Value("user").(*jwt.Token)
-
-				hasScope := checkScope("read:messages", token)
-				if !hasScope {
-					message := "Insufficient scope."
-					responseJSON(message, w, http.StatusForbidden)
-					return
-				}
-
-				message := "Hello from a private endpoint! You need to be authenticated to see this."
-				responseJSON(message, w, http.StatusOK)
-			})),
-		),
+	// This route is only accessible if the user has a valid access_token.
+	router.GET(
+		"/api/private",
+		middleware.EnsureValidToken(),
+		func(ctx *gin.Context) {
+			response := map[string]string{
+				"message": "Hello from a private endpoint! You need to be authenticated to see this.",
+			}
+			ctx.JSON(http.StatusOK, response)
+		},
 	)
 
-	return r
+	// This route is only accessible if the user has a
+	// valid access_token with the read:messages scope.
+	router.GET(
+		"/api/private-scoped",
+		middleware.EnsureValidToken(),
+		func(ctx *gin.Context) {
+			token := ctx.Request.Context().Value("user").(*jwt.Token)
+
+			hasScope := checkScope("read:messages", token)
+			if !hasScope {
+				response := map[string]string{"message": "Insufficient scope."}
+				ctx.JSON(http.StatusForbidden, response)
+				return
+			}
+
+			response := map[string]string{
+				"message": "Hello from a private endpoint! You need to be authenticated to see this.",
+			}
+			ctx.JSON(http.StatusOK, response)
+		},
+	)
+
+	return router
 }
 
 func checkScope(scope string, token *jwt.Token) bool {
@@ -81,18 +79,4 @@ func checkScope(scope string, token *jwt.Token) bool {
 	}
 
 	return false
-}
-
-func responseJSON(message string, w http.ResponseWriter, statusCode int) {
-	response := Response{message}
-
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	w.Write(jsonResponse)
 }
