@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/form3tech-oss/jwt-go"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"01-Authorization-RS256/middleware"
@@ -13,6 +14,14 @@ import (
 // New sets up our routes and returns a *gin.Engine.
 func New() *gin.Engine {
 	router := gin.Default()
+
+	router.Use(cors.New(
+		cors.Config{
+			AllowOrigins:     []string{"http://localhost:3000"},
+			AllowCredentials: true,
+			AllowHeaders:     []string{"Authorization"},
+		},
+	))
 
 	// This route is always accessible.
 	router.Any("/api/public", func(ctx *gin.Context) {
