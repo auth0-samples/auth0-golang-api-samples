@@ -2,9 +2,8 @@ package router
 
 import (
 	"net/http"
-	"strings"
 
-	"github.com/form3tech-oss/jwt-go"
+	"github.com/auth0/go-jwt-middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -49,10 +48,9 @@ func New() *gin.Engine {
 		"/api/private-scoped",
 		middleware.EnsureValidToken(),
 		func(ctx *gin.Context) {
-			token := ctx.Request.Context().Value("user").(*jwt.Token)
+			claims := ctx.Request.Context().Value(jwtmiddleware.ContextKey{}).(*middleware.CustomClaims)
 
-			hasScope := checkScope("read:messages", token)
-			if !hasScope {
+			if !claims.HasScope("read:messages") {
 				response := map[string]string{"message": "Insufficient scope."}
 				ctx.JSON(http.StatusForbidden, response)
 				return
@@ -66,26 +64,4 @@ func New() *gin.Engine {
 	)
 
 	return router
-}
-
-func checkScope(scope string, token *jwt.Token) bool {
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return false
-	}
-
-	const scopeKey = "scope"
-	tokenScope, ok := claims[scopeKey].(string)
-	if !ok {
-		return false
-	}
-
-	result := strings.Split(tokenScope, " ")
-	for i := range result {
-		if result[i] == scope {
-			return true
-		}
-	}
-
-	return false
 }
