@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/auth0/go-jwt-middleware"
+	"github.com/auth0/go-jwt-middleware/validate/josev2"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -48,8 +49,9 @@ func New() *gin.Engine {
 		"/api/private-scoped",
 		middleware.EnsureValidToken(),
 		func(ctx *gin.Context) {
-			claims := ctx.Request.Context().Value(jwtmiddleware.ContextKey{}).(*middleware.CustomClaims)
+			token := ctx.Request.Context().Value(jwtmiddleware.ContextKey{}).(*josev2.UserContext)
 
+			claims := token.CustomClaims.(*middleware.CustomClaims)
 			if !claims.HasScope("read:messages") {
 				response := map[string]string{"message": "Insufficient scope."}
 				ctx.JSON(http.StatusForbidden, response)
