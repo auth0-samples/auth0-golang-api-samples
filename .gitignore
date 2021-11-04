@@ -1,3 +1,5 @@
 .DS_Store
 01-Authorization-RS256/.env
 01-Authorization-RS256/vendor/
+01-Authorization-RS256-BETA/.env
+01-Authorization-RS256-BETA/vendor/
