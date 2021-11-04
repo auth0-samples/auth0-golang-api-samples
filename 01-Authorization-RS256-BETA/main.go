@@ -6,7 +6,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"01-Authorization-RS256/router"
+	"01-Authorization-RS256-BETA/router"
 )
 
 func main() {
