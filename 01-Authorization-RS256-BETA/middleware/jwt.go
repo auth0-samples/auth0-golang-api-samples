@@ -12,7 +12,6 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2"
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
-	"github.com/gin-gonic/gin"
 )
 
 // CustomClaims contains custom data we want from the token.
@@ -38,8 +37,8 @@ func (c CustomClaims) HasScope(expectedScope string) bool {
 	return false
 }
 
-// EnsureValidToken is a gin.HandlerFunc middleware that will check the validity of our JWT.
-func EnsureValidToken() gin.HandlerFunc {
+// EnsureValidToken is a middleware that will check the validity of our JWT.
+func EnsureValidToken() func(next http.Handler) http.Handler {
 	issuerURL, err := url.Parse("https://" + os.Getenv("AUTH0_DOMAIN") + "/")
 	if err != nil {
 		log.Fatalf("Failed to parse the issuer url: %v", err)
@@ -61,6 +60,10 @@ func EnsureValidToken() gin.HandlerFunc {
 
 	errorHandler := func(w http.ResponseWriter, r *http.Request, err error) {
 		log.Printf("Encountered error while validating JWT: %v", err)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message":"Failed to validate JWT."}`))
 	}
 
 	middleware := jwtmiddleware.New(
@@ -68,21 +71,7 @@ func EnsureValidToken() gin.HandlerFunc {
 		jwtmiddleware.WithErrorHandler(errorHandler),
 	)
 
-	return func(ctx *gin.Context) {
-		var encounteredError = true
-		var handler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-			encounteredError = false
-			ctx.Request = r
-			ctx.Next()
-		}
-
-		middleware.CheckJWT(handler).ServeHTTP(ctx.Writer, ctx.Request)
-
-		if encounteredError {
-			ctx.AbortWithStatusJSON(
-				http.StatusUnauthorized,
-				map[string]string{"message": "Failed to validate JWT."},
-			)
-		}
+	return func(next http.Handler) http.Handler {
+		return middleware.CheckJWT(next)
 	}
 }
