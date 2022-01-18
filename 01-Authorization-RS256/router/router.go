@@ -6,7 +6,7 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 
-	"01-Authorization-RS256-BETA/middleware"
+	"01-Authorization-RS256/middleware"
 )
 
 // New sets up our routes and returns a *http.ServeMux.

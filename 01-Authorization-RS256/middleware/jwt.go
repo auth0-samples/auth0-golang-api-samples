@@ -51,7 +51,11 @@ func EnsureValidToken() func(next http.Handler) http.Handler {
 		validator.RS256,
 		issuerURL.String(),
 		[]string{os.Getenv("AUTH0_AUDIENCE")},
-		validator.WithCustomClaims(&CustomClaims{}),
+		validator.WithCustomClaims(
+			func() validator.CustomClaims {
+				return &CustomClaims{}
+			},
+		),
 		validator.WithAllowedClockSkew(time.Minute),
 	)
 	if err != nil {
