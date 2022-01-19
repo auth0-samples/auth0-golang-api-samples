@@ -1,16 +1,21 @@
 # Golang Authorization for RS256-Signed Tokens
 
-This sample demonstrates how to protect endpoints in a Go API by verifying an incoming JWT access token signed by Auth0. The token must be signed with the RS256 algorithm and must be verified against your Auth0 JSON Web Key Set.
+This sample demonstrates how to protect endpoints in a Go API by verifying an incoming JWT access token signed by Auth0.
+The token must be signed with the RS256 algorithm and must be verified against your Auth0 JSON Web Key Set.
+
+Check the [Golang API Quickstart](https://auth0.com/docs/quickstart/backend/golang) to understand this sample better.
 
 ## Getting Started
 
-If you haven't already done so, [sign up](https://auth0.com/signup) for your free Auth0 account and create a new API client in the [dashboard](https://manage.auth0.com/).
+If you haven't already done so, [sign up](https://auth0.com/signup) for your free Auth0 account and create a new API
+client in the [dashboard](https://manage.auth0.com/).
 
 Clone the repo or download it from the Golang API quickstart page in Auth0's documentation.
 
 ### Add Your Credentials
 
-Rename the `.env.example` to `.env` and you will see variables for `AUTH0_DOMAIN` and `AUTH0_API_AUDIENCE`. Update these values with your credentials and save the file.
+Rename the `.env.example` to `.env` and you will see variables for `AUTH0_DOMAIN` and `AUTH0_API_AUDIENCE`.
+Update these values with your credentials and save the file.
 
 ```text
 AUTH0_DOMAIN={DOMAIN}
@@ -68,7 +73,9 @@ Auth0 helps you to:
 
 ## Issue Reporting
 
-If you have found a bug or if you have a feature request, please report them at this repository issues section. Please do not report security vulnerabilities on the public GitHub issue tracker. The [Responsible Disclosure Program](https://auth0.com/whitehat) details the procedure for disclosing security issues.
+If you have found a bug or if you have a feature request, please report them at this repository issues section.
+Please do not report security vulnerabilities on the public GitHub issue tracker.
+The [Responsible Disclosure Program](https://auth0.com/whitehat) details the procedure for disclosing security issues.
 
 ## Author
 

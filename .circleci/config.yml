@@ -66,13 +66,6 @@ jobs:
       AUTH0_CFG: 01-Authorization-RS256
       SAMPLE_PATH: 01-Authorization-RS256
     <<: *defaults
-  01-Authorization-RS256-BETA:
-    machine:
-      <<: *machine-cfg
-    environment:
-      AUTH0_CFG: 01-Authorization-RS256-BETA
-      SAMPLE_PATH: 01-Authorization-RS256-BETA
-    <<: *defaults
 
 workflows:
   version: 2
@@ -84,7 +77,3 @@ workflows:
           context: Quickstart API Tests
           requires:
             - checkout
-      - 01-Authorization-RS256-BETA:
-            context: Quickstart API Tests
-            requires:
-              - checkout

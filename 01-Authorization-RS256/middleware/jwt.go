@@ -2,43 +2,26 @@ package middleware
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
+	"time"
 
-	"github.com/auth0/go-jwt-middleware"
-	"github.com/auth0/go-jwt-middleware/validate/jwt-go"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
+	"github.com/auth0/go-jwt-middleware/v2"
+	"github.com/auth0/go-jwt-middleware/v2/jwks"
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 )
 
-const signatureAlgorithm = "RS256"
-
-// Ensure our CustomClaims implement the jwtgo.CustomClaims interface.
-var _ jwtgo.CustomClaims = &CustomClaims{}
-
-// CustomClaims holds our custom claims for the *jwt.Token.
+// CustomClaims contains custom data we want from the token.
 type CustomClaims struct {
 	Scope string `json:"scope"`
-	jwt.StandardClaims
 }
 
-// Validate our *CustomClaims.
-func (c CustomClaims) Validate(_ context.Context) error {
-	expectedAudience := os.Getenv("AUTH0_AUDIENCE")
-	if c.Audience != expectedAudience {
-		return fmt.Errorf("token claims validation failed: unexpected audience %q", c.Audience)
-	}
-
-	expectedIssuer := "https://" + os.Getenv("AUTH0_DOMAIN") + "/"
-	if c.Issuer != expectedIssuer {
-		return fmt.Errorf("token claims validation failed: unexpected issuer %q", c.Issuer)
-	}
-
+// Validate does nothing for this example, but we need
+// it to satisfy validator.CustomClaims interface.
+func (c CustomClaims) Validate(ctx context.Context) error {
 	return nil
 }
 
@@ -54,89 +37,45 @@ func (c CustomClaims) HasScope(expectedScope string) bool {
 	return false
 }
 
-// EnsureValidToken is a gin.HandlerFunc middleware that will check the validity of our JWT.
-func EnsureValidToken() gin.HandlerFunc {
-	keyFunc := func(token *jwt.Token) (interface{}, error) {
-		certificate, err := getPEMCertificate(token)
-		if err != nil {
-			return token, err
-		}
-
-		return jwt.ParseRSAPublicKeyFromPEM([]byte(certificate))
+// EnsureValidToken is a middleware that will check the validity of our JWT.
+func EnsureValidToken() func(next http.Handler) http.Handler {
+	issuerURL, err := url.Parse("https://" + os.Getenv("AUTH0_DOMAIN") + "/")
+	if err != nil {
+		log.Fatalf("Failed to parse the issuer url: %v", err)
 	}
 
-	customClaims := func() jwtgo.CustomClaims {
-		return &CustomClaims{}
-	}
+	provider := jwks.NewCachingProvider(issuerURL, 5*time.Minute)
 
-	validator, err := jwtgo.New(
-		keyFunc,
-		signatureAlgorithm,
-		jwtgo.WithCustomClaims(customClaims),
+	jwtValidator, err := validator.New(
+		provider.KeyFunc,
+		validator.RS256,
+		issuerURL.String(),
+		[]string{os.Getenv("AUTH0_AUDIENCE")},
+		validator.WithCustomClaims(
+			func() validator.CustomClaims {
+				return &CustomClaims{}
+			},
+		),
+		validator.WithAllowedClockSkew(time.Minute),
 	)
 	if err != nil {
 		log.Fatalf("Failed to set up the jwt validator")
 	}
 
-	m := jwtmiddleware.New(validator.ValidateToken)
+	errorHandler := func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Printf("Encountered error while validating JWT: %v", err)
 
-	return func(ctx *gin.Context) {
-		var encounteredError = true
-		var handler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-			encounteredError = false
-			ctx.Request = r
-			ctx.Next()
-		}
-
-		m.CheckJWT(handler).ServeHTTP(ctx.Writer, ctx.Request)
-
-		if encounteredError {
-			ctx.AbortWithStatusJSON(
-				http.StatusUnauthorized,
-				map[string]string{"message": "Failed to validate JWT."},
-			)
-		}
-	}
-}
-
-type (
-	jwks struct {
-		Keys []jsonWebKeys `json:"keys"`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message":"Failed to validate JWT."}`))
 	}
 
-	jsonWebKeys struct {
-		Kty string   `json:"kty"`
-		Kid string   `json:"kid"`
-		Use string   `json:"use"`
-		N   string   `json:"n"`
-		E   string   `json:"e"`
-		X5c []string `json:"x5c"`
-	}
-)
+	middleware := jwtmiddleware.New(
+		jwtValidator.ValidateToken,
+		jwtmiddleware.WithErrorHandler(errorHandler),
+	)
 
-func getPEMCertificate(token *jwt.Token) (string, error) {
-	response, err := http.Get("https://" + os.Getenv("AUTH0_DOMAIN") + "/.well-known/jwks.json")
-	if err != nil {
-		return "", err
+	return func(next http.Handler) http.Handler {
+		return middleware.CheckJWT(next)
 	}
-	defer response.Body.Close()
-
-	var jwks jwks
-	if err = json.NewDecoder(response.Body).Decode(&jwks); err != nil {
-		return "", err
-	}
-
-	var cert string
-	for _, key := range jwks.Keys {
-		if token.Header["kid"] == key.Kid {
-			cert = "-----BEGIN CERTIFICATE-----\n" + key.X5c[0] + "\n-----END CERTIFICATE-----"
-			break
-		}
-	}
-
-	if cert == "" {
-		return cert, errors.New("unable to find appropriate key")
-	}
-
-	return cert, nil
 }

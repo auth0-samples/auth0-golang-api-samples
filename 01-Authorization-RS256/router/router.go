@@ -3,65 +3,61 @@ package router
 import (
 	"net/http"
 
-	"github.com/auth0/go-jwt-middleware"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/auth0/go-jwt-middleware/v2"
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 
 	"01-Authorization-RS256/middleware"
 )
 
-// New sets up our routes and returns a *gin.Engine.
-func New() *gin.Engine {
-	router := gin.Default()
-
-	router.Use(cors.New(
-		cors.Config{
-			AllowOrigins:     []string{"http://localhost:3000"},
-			AllowCredentials: true,
-			AllowHeaders:     []string{"Authorization"},
-		},
-	))
+// New sets up our routes and returns a *http.ServeMux.
+func New() *http.ServeMux {
+	router := http.NewServeMux()
 
 	// This route is always accessible.
-	router.Any("/api/public", func(ctx *gin.Context) {
-		response := map[string]string{
-			"message": "Hello from a public endpoint! You don't need to be authenticated to see this.",
-		}
-		ctx.JSON(http.StatusOK, response)
-	})
+	router.Handle("/api/public", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message":"Hello from a public endpoint! You don't need to be authenticated to see this."}`))
+	}))
 
 	// This route is only accessible if the user has a valid access_token.
-	router.GET(
-		"/api/private",
-		middleware.EnsureValidToken(),
-		func(ctx *gin.Context) {
-			response := map[string]string{
-				"message": "Hello from a private endpoint! You need to be authenticated to see this.",
-			}
-			ctx.JSON(http.StatusOK, response)
-		},
-	)
+	router.Handle("/api/private", middleware.EnsureValidToken()(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// CORS Headers.
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"message":"Hello from a private endpoint! You need to be authenticated to see this."}`))
+		}),
+	))
 
 	// This route is only accessible if the user has a
 	// valid access_token with the read:messages scope.
-	router.GET(
-		"/api/private-scoped",
-		middleware.EnsureValidToken(),
-		func(ctx *gin.Context) {
-			claims := ctx.Request.Context().Value(jwtmiddleware.ContextKey{}).(*middleware.CustomClaims)
+	router.Handle("/api/private-scoped", middleware.EnsureValidToken()(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// CORS Headers.
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization")
 
+			w.Header().Set("Content-Type", "application/json")
+
+			token := r.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
+
+			claims := token.CustomClaims.(*middleware.CustomClaims)
 			if !claims.HasScope("read:messages") {
-				response := map[string]string{"message": "Insufficient scope."}
-				ctx.JSON(http.StatusForbidden, response)
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte(`{"message":"Insufficient scope."}`))
 				return
 			}
 
-			response := map[string]string{
-				"message": "Hello from a private endpoint! You need to be authenticated to see this.",
-			}
-			ctx.JSON(http.StatusOK, response)
-		},
-	)
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"message":"Hello from a private endpoint! You need to be authenticated to see this."}`))
+		}),
+	))
 
 	return router
 }
