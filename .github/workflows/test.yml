@@ -51,9 +51,14 @@ jobs:
             -e "s|{API_IDENTIFIER}|$API_IDENTIFIER|g" \
             .env.example > .env
       
-      - name: Startup sample
+      - name: Build PR image
         working-directory: 01-Authorization-RS256
-        run: sh exec.sh
+        env:
+          IMAGE_NAME: ${{ github.event.pull_request.head.sha || github.sha }}
+          CONTAINER_NAME: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          docker build -t $IMAGE_NAME .
+          docker run -d --env-file .env -p 3010:3010 $CONTAINER_NAME $IMAGE_NAME
 
       - name: Wait for sample to start
         run: |
