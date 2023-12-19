@@ -74,6 +74,7 @@ jobs:
         env:
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
           API_IDENTIFIER: ${{ secrets.API_IDENTIFIER }}
+          API_URL: 'http://localhost:3010'
           CLIENT_ID_SCOPES_NONE: ${{ secrets.CLIENT_ID_SCOPES_NONE }}
           CLIENT_SECRET_SCOPES_NONE: ${{ secrets.CLIENT_SECRET_SCOPES_NONE }}
           CLIENT_ID_SCOPES_READ: ${{ secrets.CLIENT_ID_SCOPES_READ }}
