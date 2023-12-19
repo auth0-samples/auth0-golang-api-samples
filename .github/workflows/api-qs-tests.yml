@@ -44,7 +44,7 @@ jobs:
     steps:
       - run: true
 
-  sample:
+  tests:
     needs: authorize
     name: Test Sample
     runs-on: ubuntu-latest
