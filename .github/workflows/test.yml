@@ -65,7 +65,11 @@ jobs:
           sleep 10
           docker run --network host --rm appropriate/curl --retry 8 --retry-connrefused -v localhost:3010
 
-      - name: Setup tests .env
+      - name: Install dependencies
+        working-directory: tests
+        run: npm i
+      
+      - name: Run tests
         working-directory: tests
         env:
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
@@ -78,24 +82,4 @@ jobs:
           CLIENT_SECRET_SCOPES_WRITE: ${{ secrets.CLIENT_SECRET_SCOPES_WRITE }}
           CLIENT_ID_SCOPES_READWRITE: ${{ secrets.CLIENT_ID_SCOPES_READWRITE }}
           CLIENT_SECRET_SCOPES_READWRITE: ${{ secrets.CLIENT_SECRET_SCOPES_READWRITE }}
-        run: |
-          sed \
-            -e "s|{DOMAIN}|$AUTH0_TEST_DOMAIN|g" \
-            -e "s|{API_ID}|$API_IDENTIFIER|g" \
-            -e "s|{CLIENT_ID_1}|$CLIENT_ID_SCOPES_NONE|g" \
-            -e "s|{CLIENT_SECRET_1}|$CLIENT_SECRET_SCOPES_NONE|g" \
-            -e "s|{CLIENT_ID_2}|$CLIENT_ID_SCOPES_READ|g" \
-            -e "s|{CLIENT_SECRET_2}|$CLIENT_SECRET_SCOPES_READ|g" \
-            -e "s|{CLIENT_ID_3}|$CLIENT_ID_SCOPES_WRITE|g" \
-            -e "s|{CLIENT_SECRET_3}|$CLIENT_SECRET_SCOPES_WRITE|g" \
-            -e "s|{CLIENT_ID_4}|$CLIENT_ID_SCOPES_READWRITE|g" \
-            -e "s|{CLIENT_SECRET_4}|$CLIENT_SECRET_SCOPES_READWRITE|g" \
-            .env.example > .env 
-
-      - name: Install dependencies
-        working-directory: tests
-        run: npm i
-      
-      - name: Run tests
-        working-directory: tests
         run: npm test
