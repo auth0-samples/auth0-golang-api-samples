@@ -110,3 +110,11 @@ jobs:
           AUTH0_CLIENT_ID_4: ${{ secrets.CLIENT_ID_SCOPES_READWRITE }}
           AUTH0_CLIENT_SECRET_4: ${{ secrets.CLIENT_SECRET_SCOPES_READWRITE }}
         run: npm test
+
+      - name: Copy app logs
+        env:
+          CONTAINER_NAME: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          mkdir -p /tmp/out
+          docker logs $CONTAINER_NAME > /tmp/out/app_logs.log
+        if: failure()
