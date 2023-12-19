@@ -53,7 +53,7 @@ jobs:
       
       - name: Startup sample
         working-directory: 01-Authorization-RS256
-        run: sh exec.sh &
+        run: sh exec.sh
 
       - name: Wait for sample to start
         run: |
