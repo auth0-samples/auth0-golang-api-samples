@@ -8,7 +8,7 @@ on:
 
 jobs:
   test-01-authorization-rs256:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     env:
       AUTH0_CFG: 01-Authorization-RS256
