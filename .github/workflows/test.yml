@@ -44,11 +44,15 @@ jobs:
       - name: Install Go dependencies
         run: cd $AUTH0_CFG && go mod download
 
-      - name: Start server in background
-        run: cd $AUTH0_CFG && sh exec.sh &
+      - name: Build Docker image
+        run: cd $AUTH0_CFG && docker build -t auth0-golang-api .
+
+      - name: Start server in detached mode
+        run: cd $AUTH0_CFG && docker run -d --env-file .env -p 8080:8080 auth0-golang-api
 
       - name: Wait for server to be ready
         run: |
+          sleep 3
           until $(curl --silent --head --output /dev/null --fail http://localhost:8080/api/public); do
             echo "Waiting for server to start..."
             sleep 5
