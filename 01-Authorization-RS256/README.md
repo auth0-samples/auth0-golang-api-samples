@@ -1,86 +1,168 @@
-# Golang Authorization for RS256-Signed Tokens
+# Auth0 Golang API Sample - Authorization (RS256)
 
-This sample demonstrates how to protect endpoints in a Go API by verifying an incoming JWT access token signed by Auth0.
-The token must be signed with the RS256 algorithm and must be verified against your Auth0 JSON Web Key Set.
+This sample demonstrates how to protect a Go API using Auth0 with RS256 signed JWT tokens.
 
-Check the [Golang API Quickstart](https://auth0.com/docs/quickstart/backend/golang) to understand this sample better.
+## Prerequisites
 
-## Getting Started
+- Go 1.24 or higher
+- An Auth0 account ([Sign up for free](https://auth0.com/signup))
 
-If you haven't already done so, [sign up](https://auth0.com/signup) for your free Auth0 account and create a new API
-client in the [dashboard](https://manage.auth0.com/).
+## Setup
 
-Clone the repo or download it from the Golang API quickstart page in Auth0's documentation.
+1. **Create an API in Auth0 Dashboard:**
+   - Go to APIs in your Auth0 Dashboard
+   - Click "Create API"
+   - Give it a name and identifier (audience)
+   - Select RS256 signing algorithm
 
-### Add Your Credentials
+2. **Add permissions to your API:**
+   - Select your API in the Auth0 Dashboard
+   - Go to the **Permissions** tab
+   - Add a new permission:
+     - **Permission (Scope):** `read:messages`
+     - **Description:** Read messages from the API
+   - Click **Add**
 
-Rename the `.env.example` to `.env` and you will see variables for `AUTH0_DOMAIN` and `AUTH0_API_AUDIENCE`.
-Update these values with your credentials and save the file.
+3. **Enable RBAC for your API (Important!):**
+   - Select your API in the Auth0 Dashboard
+   - Go to the **Settings** tab
+   - Scroll down to **RBAC Settings**
+   - Enable **Enable RBAC**
+   - Enable **Add Permissions in the Access Token**
+   - Click **Save**
+   
+   <img src="../assets/enable-rbac-settings.png" alt="Enable RBAC Settings" width="600">
+   
+   > ⚠️ **Note:** Without enabling these settings, the `permissions` array in your access token will be empty, causing the scoped endpoint to fail with a 403 error.
 
-```text
-AUTH0_DOMAIN={DOMAIN}
-AUTH0_AUDIENCE={API_AUDIENCE}
-```
+4. **Configure Machine-to-Machine Application (for testing):**
+   - Go to **Applications > Applications** in your Auth0 Dashboard
+   - Select your Machine-to-Machine application (or create one)
+   - Go to the **APIs** tab
+   - Find your API and expand it
+   - Toggle **Authorize** to enable it
+   - Select the permissions you want to grant (e.g., `read:messages`)
+   - Click **Update**
+   
+   <img src="../assets/m2m-permissions.png" alt="Configure M2M Permissions" width="600">
+   
+   > 💡 This step ensures that tokens generated for this application will include the selected permissions in the `permissions` array.
 
-### Install Dependencies and Start Server
+5. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` and set:
+   ```
+   AUTH0_DOMAIN=your-tenant.auth0.com
+   AUTH0_AUDIENCE=https://your-api-identifier
+   ```
+
+6. **Install dependencies:**
+   ```bash
+   go mod download
+   ```
+
+## Running the Sample
 
 ```bash
-# Download dependencies
-go mod vendor
-
-# Start the server
-go run main.go
+go run cmd/server/main.go
 ```
 
-The API will be served at `http://localhost:3010`.
+The server will start on port 8080.
 
-### Endpoints
+## API Endpoints
 
-The sample includes these endpoints:
+### Public Endpoint (No Authentication Required)
+```bash
+curl http://localhost:8080/api/public
+```
 
-**GET** /api/public
-* An unprotected endpoint which returns a message on success. Does not require a valid JWT access token.
+### Private Endpoint (Requires Valid JWT)
+```bash
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+     http://localhost:8080/api/private
+```
 
-**GET** /api/private
-* A protected endpoint which returns a message on success. Requires a valid JWT access token.
+### Scoped Endpoint (Requires JWT with `read:messages` scope)
+```bash
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+     http://localhost:8080/api/private-scoped
+```
 
-**GET** /api/private-scoped
-* A protected endpoint which returns a message on success. Requires a valid JWT access token with a `scope` of `read:messages`.
+## Getting an Access Token
 
-### Running the Example With Docker
+To test the protected endpoints, you need an access token:
 
-In order to run the example with docker, you need to have `docker` installed.
+1. Go to the **Test** tab of your API in the Auth0 Dashboard
+2. In the **Scopes** field, add `read:messages` (for testing the scoped endpoint)
+3. Copy the provided access token or `curl` command
+4. Use it in the `Authorization` header as shown above
 
-You also need to set the environment variables as explained [previously](#add-your-credentials).
+**Note:** Tokens without the `read:messages` scope will receive a 403 Forbidden error when accessing the scoped endpoint.
 
-Execute in command line `sh exec.sh` to run the Docker in Linux, or `.\exec.ps1` to run the Docker in Windows.
+### Verifying Your Token Contains Permissions
 
-## What is Auth0?
+You can decode your JWT token at [jwt.io](https://jwt.io) to verify it contains the permissions. A properly configured token should include:
 
-Auth0 helps you to:
+```json
+{
+  "iss": "https://your-tenant.auth0.com/",
+  "sub": "...",
+  "aud": "https://your-api-identifier",
+  "iat": 1697988893,
+  "exp": 1698075293,
+  "azp": "...",
+  "scope": "read:messages",
+  "gty": "client-credentials",
+  "permissions": [
+    "read:messages"
+  ]
+}
+```
 
-* Add authentication with [multiple authentication sources](https://auth0.com/docs/authenticate/identity-providers), either social like **Google, Facebook, Microsoft Account, LinkedIn, GitHub, Twitter, Box, Salesforce, among others**, or enterprise identity systems like **Windows Azure AD, Google Apps, Active Directory, ADFS or any SAML Identity Provider**.
-* Add authentication through more traditional **[username/password databases](https://auth0.com/docs/authenticate/database-connections/custom-db/overview-custom-db-connections)**.
-* Add support for **[linking different user accounts](https://auth0.com/docs/manage-users/user-accounts/user-account-linking)** with the same user.
-* Support for generating signed [Json Web Tokens](https://auth0.com/docs/secure/tokens/json-web-tokens) to call your APIs and **flow the user identity** securely.
-* Analytics of how, when and where users are logging in.
-* Pull data from other sources and add it to the user profile, through [JavaScript rules](https://auth0.com/docs/customize/rules).
+If the `permissions` array is empty, please verify you've completed steps 3 and 4 in the Setup section above.
 
-## Create a free Auth0 account
+## Project Structure
 
-1. Go to [Auth0](https://auth0.com/signup) and click Sign Up.
-2. Use Google, GitHub or Microsoft Account to login.
+```
+01-Authorization-RS256/
+├── cmd/
+│   └── server/
+│       └── main.go          # Application entry point
+├── internal/
+│   ├── auth/
+│   │   ├── validator.go     # JWT validator setup
+│   │   └── middleware.go    # JWT middleware
+│   ├── config/
+│   │   └── auth.go          # Configuration loading
+│   └── handlers/
+│       └── api.go           # HTTP handlers
+├── .env.example
+├── go.mod
+└── README.md
+```
 
-## Issue Reporting
+## Key Features
 
-If you have found a bug or if you have a feature request, please report them at this repository issues section.
-Please do not report security vulnerabilities on the public GitHub issue tracker.
-The [Responsible Disclosure Program](https://auth0.com/whitehat) details the procedure for disclosing security issues.
+- ✅ RS256 JWT validation
+- ✅ Custom claims support
+- ✅ Scope-based authorization
+- ✅ Graceful shutdown
+- ✅ Production-ready timeouts
+- ✅ Structured logging with slog
 
-## Author
+## Learn More
 
-[Auth0](https://auth0.com)
+- [Auth0 Go SDK Documentation](https://github.com/auth0/go-jwt-middleware)
+- [Auth0 Documentation](https://auth0.com/docs)
+- [Securing Go APIs with 
+## Project Structure
+
+```
+01-Autckstart/backend/golang)
 
 ## License
 
-This project is licensed under the MIT license. See the `LICENSE` file for more info.
+This project is licensed under the MIT license. See the [LICENSE](../../LICENSE) file for more info.

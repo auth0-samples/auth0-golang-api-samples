@@ -1,9 +1,9 @@
-FROM golang:1.17-alpine3.14
+FROM golang:1.24-alpine
 
 # Install git
 RUN apk --update add \
-	git openssl \
-	&& rm /var/cache/apk/*
+        git openssl \
+        && rm /var/cache/apk/*
 
 # Define current working directory
 WORKDIR /01-Authorization-RS256
@@ -17,7 +17,7 @@ RUN go mod download
 # Add sources
 COPY . .
 
-# Expose port 3010 for our api binary
-EXPOSE 3010
+# Expose port 8080 for our api binary
+EXPOSE 8080
 
-CMD ["go", "run", "main.go"]
+CMD ["go", "run", "cmd/server/main.go"]
