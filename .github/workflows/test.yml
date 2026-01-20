@@ -48,12 +48,12 @@ jobs:
         run: cd $AUTH0_CFG && docker build -t auth0-golang-api .
 
       - name: Start server in detached mode
-        run: cd $AUTH0_CFG && docker run -d --env-file .env -p 8080:8080 auth0-golang-api
+        run: cd $AUTH0_CFG && docker run -d --env-file .env -p 3010:3010 auth0-golang-api
 
       - name: Wait for server to be ready
         run: |
           sleep 3
-          until $(curl --silent --head --output /dev/null --fail http://localhost:8080/api/public); do
+          until $(curl --silent --head --output /dev/null --fail http://localhost:3010/api/public); do
             echo "Waiting for server to start..."
             sleep 5
           done
@@ -82,7 +82,7 @@ jobs:
           echo "AUTH0_CLIENT_SECRET_3=$CLIENT_SECRET_SCOPES_WRITE" >> .env
           echo "AUTH0_CLIENT_ID_4=$CLIENT_ID_SCOPES_READWRITE" >> .env
           echo "AUTH0_CLIENT_SECRET_4=$CLIENT_SECRET_SCOPES_READWRITE" >> .env
-          echo "API_URL=http://localhost:8080" >> .env
+          echo "API_URL=http://localhost:3010" >> .env
           npm install
 
       - name: Run automated tests
