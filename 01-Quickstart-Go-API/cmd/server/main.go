@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/auth0-samples/auth0-golang-api-samples/01-Authorization-RS256/internal/auth"
-	"github.com/auth0-samples/auth0-golang-api-samples/01-Authorization-RS256/internal/config"
-	"github.com/auth0-samples/auth0-golang-api-samples/01-Authorization-RS256/internal/handlers"
+	"github.com/auth0-samples/auth0-golang-api-samples/01-Quickstart-Go-API/internal/auth"
+	"github.com/auth0-samples/auth0-golang-api-samples/01-Quickstart-Go-API/internal/config"
+	"github.com/auth0-samples/auth0-golang-api-samples/01-Quickstart-Go-API/internal/handlers"
 	"github.com/joho/godotenv"
 )
 

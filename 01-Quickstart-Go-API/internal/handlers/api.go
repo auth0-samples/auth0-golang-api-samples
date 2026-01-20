@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/auth0-samples/auth0-golang-api-samples/01-Authorization-RS256/internal/auth"
+	"github.com/auth0-samples/auth0-golang-api-samples/01-Quickstart-Go-API/internal/auth"
 	jwtmiddleware "github.com/auth0/go-jwt-middleware/v3"
 	"github.com/auth0/go-jwt-middleware/v3/validator"
 )
