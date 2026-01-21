@@ -73,6 +73,7 @@ func EnsureValidToken() func(next http.Handler) http.Handler {
 	middleware := jwtmiddleware.New(
 		jwtValidator.ValidateToken,
 		jwtmiddleware.WithErrorHandler(errorHandler),
+		jwtmiddleware.WithValidateOnOptions(false),
 	)
 
 	return func(next http.Handler) http.Handler {
