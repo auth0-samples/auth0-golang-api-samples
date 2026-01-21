@@ -1,10 +1,19 @@
 version: 2
 updates:
-
-  - package-ecosystem: "gomod" 
-    directory: "/01-Authorization-RS256" 
+  - package-ecosystem: "gomod"
+    directory: "/01-Authorization-RS256"
     schedule:
       interval: "daily"
     ignore:
       - dependency-name: "*"
-        update-types: ["version-update:semver-major", "version-update:semver-patch"]
+        update-types:
+          ["version-update:semver-major", "version-update:semver-patch"]
+
+  - package-ecosystem: "gomod"
+    directory: "/01-Quickstart-Go-API"
+    schedule:
+      interval: "daily"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          ["version-update:semver-major", "version-update:semver-patch"]

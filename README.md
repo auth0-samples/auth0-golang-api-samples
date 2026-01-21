@@ -1,6 +1,6 @@
 # Auth0 Golang API Samples
 
-[![CircleCI](https://img.shields.io/circleci/project/github/auth0-samples/auth0-golang-api-samples.svg?style=flat-square)](https://circleci.com/gh/auth0-samples/auth0-golang-api-samples/tree/master)
+[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/auth0-samples/auth0-golang-api-samples/test.yml?branch=master&style=flat-square)](https://github.com/auth0-samples/auth0-golang-api-samples/actions)
 
 These samples demonstrate how to create an API with Go which only permits access to resources if a valid **access token** is included. This verification is done by validating the signature and claims in a JSON Web Token (JWT) signed by Auth0.
 
